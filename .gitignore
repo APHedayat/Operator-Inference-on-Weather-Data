@@ -1,0 +1,21 @@
+
+# Ignore results directory
+results/
+evaluation_results/
+
+# Ignore notebook files
+*.ipynb
+
+# Ignore byte-compiled / optimized / DLL files
+__pycache__/
+.ipynb_checkpoints/
+
+# Ignore log files
+*.log
+
+# Ignore bash scripts
+*.sh
+
+# Ignore test files
+test*
+
