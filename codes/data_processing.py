@@ -15,6 +15,7 @@ import pickle
 import time
 import opinf
 import config
+import dask.array as da
 
 def prepare_training_set(data, logger):
 
@@ -40,6 +41,7 @@ def prepare_training_set(data, logger):
 
     logger.info(f"performing dimensionality reduction using {config.DIM_RED_METHOD}...")
     Vr = dimensionality_reduction(data=X_train_scaled)
+    logger.info(f"\t\treduced dimension: {Vr.shape[0]}")
     logger.info("done.")
 
     Xr = Vr.T @ X_train_scaled # project onto the reduced manifold
@@ -369,6 +371,36 @@ def nmf(data):
     np.save(file=f'{out_basis_dir}/basis.npy', arr=reduced_data)
     return reduced_data
 
+def dask_pod(data):
+
+    dask_data = da.from_array(data, chunks=(data.shape[0], config.DASK_CHUNK_SIZE)) # make chunks tall and skinny
+
+    start_time = time.time()
+    V, svdvals, Vt = da.linalg.svd(dask_data)
+    V, svdvals, Vt = V.compute(), svdvals.compute(), Vt.compute()
+    end_time = time.time()
+
+    r = opinf.basis.cumulative_energy(svdvals, config.POD_ENERGY_CUTOFF, plot=True)
+    plt.tight_layout()
+    plt.savefig(f'{config.OUT_PATH}/POD_energy.pdf')
+    plt.close()
+    print(f"\nr = {r:d} singular values exceed {config.POD_ENERGY_CUTOFF:.4%} energy")
+    Vr = V[:, :r]
+    wall_time_seconds = end_time - start_time
+    hours = int(wall_time_seconds // 3600)
+    minutes = int((wall_time_seconds % 3600) // 60)
+    seconds = wall_time_seconds % 60
+    print(f"\nPOD wall time: {hours:02} hours : {minutes:02} minutes : {seconds:02.0f} seconds")
+    print(f"Shape of Vr: {Vr.shape}")
+
+    # save the basis
+    out_basis_dir = f"{config.OUT_PATH}/basis"
+    if not os.path.exists(out_basis_dir):
+        os.mkdir(out_basis_dir)
+    np.save(file=f'{out_basis_dir}/basis.npy', arr=Vr)
+
+    return Vr
+
 def dimensionality_reduction(data):
     if config.DIM_RED_METHOD == 'POD':
         return pod(data)
@@ -380,5 +412,7 @@ def dimensionality_reduction(data):
         return ica(data)
     elif config.DIM_RED_METHOD == 'NMF':
         return nmf(data)
+    elif config.DIM_RED_METHOD == 'Dask_POD':
+        return dask_pod(data)
     else:
         raise ValueError("Invalid method. Choose from 'POD', 'Randomized_POD', 'KPCA', 'ICA', 'NMF'.")
