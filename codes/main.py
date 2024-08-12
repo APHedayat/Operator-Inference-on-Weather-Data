@@ -31,12 +31,14 @@ from data_processing import (dataset_to_array,
                              scale_data,
                              dimensionality_reduction,
                              array_to_dataset_evaluation,
-                             prepare_training_set)
+                             prepare_training_set,
+                             encode_data)
 from model import (train_model,
                    check_stability,
                    run_model,
                    train_TD_model,
-                   run_TD_model)
+                   run_TD_model,
+                   build_encoder_decoder)
 from evaluation import (evaluate_model,
                         generate_evaluation_trajectories)
 import logging
@@ -101,16 +103,29 @@ def main():
         Vr = np.load(file=config.BASIS_PATH)
         logger.info("done.")
 
+        logger.info(f"creating the residual dataset...")
+        X_train, time_train = dataset_to_array(data,
+                                     config.DATA_VARS,
+                                     config.TRAIN_START_DATE,
+                                     config.TRAIN_END_DATE)
+        X_train = X_train - x_sub.reshape(-1,1)
+        X_train_scaled = scaler.transform(X_train.T).T
+        X_res = X_train_scaled - (Vr @ Xr)
+        latitude = data.latitude
+        longitude = data.longitude
+        X_res_dataset = array_to_dataset(X_res, config.DATA_VARS, time_train, latitude, longitude, ref_dataset=data)
+        logger.info("done.")
+
     else:
 
-        Xr, X_res, x_sub, Vr, scaler = prepare_training_set(data=data, logger=logger)
+        Xr, X_res_dataset, x_sub, Vr, scaler = prepare_training_set(data=data, logger=logger)
 
 
 
     # train the base model
     if config.POD_MODEL:
 
-        logger.info(f"reading the POD model...")
+        logger.info(f"reading the base model...")
         A_combined = np.load(file=config.POD_MODEL)
         out_model_dir = f"{config.OUT_PATH}/model"
         if not os.path.exists(out_model_dir):
@@ -120,21 +135,28 @@ def main():
 
     else:
 
-        logger.info("training the model...")
+        logger.info("training the base model...")
         A_combined = train_TD_model(X=Xr, delay=config.TIME_DELAY, regularizer=config.REGULARIZER, logger=logger) # returns the augmented operator
         logger.info("done.")
 
     
 
-    # TODO: build the encoder and the decoder
+    # build the encoder and the decoder
+    encoder, decoder = build_encoder_decoder(path_to_convAE_weights=config.AE_WEIGHTS_PATH)
+    X_res_encoded = encode_data(X_dataset=X_res_dataset, encoder=encoder)
 
 
 
-    # TODO: train the residual model
+    # train the residual model
+    logger.info("training the residual model...")
+    B_combined = train_TD_model(X=X_res_encoded, model_structure=config.RES_MODEL_STRUCTURE,
+                                delay=0, regularizer=config.RES_MODEL_REGULARIZER,
+                                logger=logger) # returns the augmented operator
+    logger.info("done.")
 
 
 
-    # create the evaluation dataset
+    # TODO: create the evaluation dataset
     logger.info("evalating the model (generating trajectories)...")
     generate_evaluation_trajectories(model=A_combined, data=data, basis=Vr, scaler=scaler, logger=logger, x_sub=x_sub)
     logger.info("done.")

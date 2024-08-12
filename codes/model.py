@@ -10,6 +10,8 @@ from data_processing import reverse_delayed_dataset
 from scipy.linalg import pinv
 from scipy.integrate import solve_ivp
 from scipy.linalg import pinv, eigvals
+import torch
+import conv_networks
 
 def train_model(prepared_data, save_model=True, regularizer=config.REGULARIZER):
   
@@ -336,4 +338,85 @@ def run_TD_model_scipy(A_combined, x0_augmented, num_steps, basis, scaler, metho
     
     return X_sim
 
+
+def build_encoder_decoder(path_to_convAE_weights):
+    
+    # define the general structure of the convolutional autoencoder
+    model_opt = conv_networks.convAutoencoder2dV1Settings(
+        n_layers_conv           = 4,
+        kernel_size             = [(2,2),(2,2), (2,2),(2,2),],
+        strides                 = [(2,1),(2,2), (2,2),(2,2),],
+        filters_encoder         = [50,]*4,
+        filters_decoder         = [50,]*4,
+        activation_conv         = 'swish',
+        n_layers_hidden_dense   = 2,
+        n_nodes_hidden_dense    = [100,-1], # use for last layer to determine automatically
+        inputs_shape            = (240,121),
+        inputs_channels         = 4,
+        outputs_shape           = (240,121),
+        outputs_channels        = 4,
+        activation_dense        = 'swish',
+        groups                  = 1,
+        dilation                = 1,
+        padding                 = 'valid',
+        padding_mode_conv       = 'zeros',
+        is_layer_norm_conv      = True,
+        is_layer_norm_dense     = False,
+        is_linear_output        = True,
+        is_bias_conv            = True,
+        is_bias_dense           = True,
+    )
+
+    # load the model
+    model = conv_networks.convAutoencoder2dV1(opt = model_opt)
+    model.load_state_dict(torch.load(path_to_convAE_weights))
+
+    # define the general structure of the encoder
+    class Encoder(torch.nn.Module):
+        def __init__(self, conv_encoder, flatten, first_dense_layer):
+            super(Encoder, self).__init__()
+            self.convEncoder = conv_encoder
+            self.flatten = flatten
+            self.first_dense_layer = first_dense_layer
+        
+        def forward(self, x):
+            x = self.convEncoder(x)
+            x = self.flatten(x)
+            z = self.first_dense_layer(x)
+            return z
+        
+    # define the general structure of the decoder
+    class Decoder(torch.nn.Module):
+        def __init__(self, second_dense_layer, decoder_input_shape, conv_decoder):
+            super(Decoder, self).__init__()
+            self.second_dense_layer = second_dense_layer
+            self.decoder_input_shape = decoder_input_shape
+            self.convDecoder = conv_decoder
+        
+        def forward(self, z):
+            # Expand the latent space back to the required shape
+            z_expanded = self.second_dense_layer(z)
+            # Reshape the expanded latent space to match the input shape of the convDecoder
+            z_expanded = torch.reshape(z_expanded, (-1, *self.decoder_input_shape))
+            # Apply the transposed convolutional layers to reconstruct the input
+            x_recon = self.convDecoder(z_expanded)
+            return x_recon
+        
+    # Extract the encoder components
+    conv_encoder = model.convEncoder
+    flatten = model.flatten
+    first_dense_layer = model.dense_net[0]  # This is the first dense layer that outputs the 100-dimensional latent space
+
+    # Create the encoder
+    encoder = Encoder(conv_encoder, flatten, first_dense_layer)
+
+    # Extract the decoder components
+    second_dense_layer = model.dense_net[1]  # This is the second dense layer that expands the 100-dimensional latent space
+    decoder_input_shape = model.decoder_input_shape
+    conv_decoder = model.convDecoder
+
+    # Create the decoder
+    decoder = Decoder(second_dense_layer, decoder_input_shape, conv_decoder)
+
+    return encoder, decoder
 

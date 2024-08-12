@@ -16,6 +16,7 @@ import time
 import opinf
 import config
 import dask.array as da
+import torch
 
 def prepare_training_set(data, logger):
 
@@ -53,6 +54,7 @@ def prepare_training_set(data, logger):
 
     # calculate the residual
     X_res = X_train_scaled - (Vr @ Xr)
+    X_res_dataset = array_to_dataset(X_res, config.DATA_VARS, time_train, latitude, longitude, ref_dataset=data)
 
     # store true data after losing accuracy due to PCA
     logger.info("storing true data after pca projection...")
@@ -77,7 +79,7 @@ def prepare_training_set(data, logger):
     X_test_dataset.to_zarr(f'{config.LARGE_OUT_PATH}/processed_test_set.nc')
 
 
-    return Xr, X_res, x_sub, Vr, scaler
+    return Xr, X_res_dataset, x_sub, Vr, scaler
 
 def dataset_to_array(data, variable_names, start_date, end_date):
     """
@@ -421,3 +423,19 @@ def dimensionality_reduction(data):
         return dask_pod(data)
     else:
         raise ValueError("Invalid method. Choose from 'POD', 'Randomized_POD', 'KPCA', 'ICA', 'NMF'.")
+    
+
+def encode_data(X_dataset, encoder):
+
+    # Ensure data is in the format [time, variable, longitude, latitude]
+    X = X_dataset.to_array().transpose('time', 'variable', 'longitude', 'latitude').values
+
+    # Convert to torch tensor
+    X_tensor = torch.tensor(X, dtype=torch.float32)
+
+    # encode
+    with torch.no_grad():
+        X_tensor_encoded = encoder(X_tensor).T # transpose to be in (latent, time) shape
+
+    return X_tensor_encoded
+
