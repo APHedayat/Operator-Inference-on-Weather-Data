@@ -103,14 +103,34 @@ def main():
 
     else:
 
-        Xr, x_sub, Vr, scaler = prepare_training_set(data=data, logger=logger)
+        Xr, X_res, x_sub, Vr, scaler = prepare_training_set(data=data, logger=logger)
 
 
 
-    # train the model
-    logger.info("training the model...")
-    A_combined = train_TD_model(X=Xr, delay=config.TIME_DELAY, regularizer=config.REGULARIZER, logger=logger) # returns the augmented operator
-    logger.info("done.")
+    # train the base model
+    if config.POD_MODEL:
+
+        logger.info(f"reading the POD model...")
+        A_combined = np.load(file=config.POD_MODEL)
+        out_model_dir = f"{config.OUT_PATH}/model"
+        if not os.path.exists(out_model_dir):
+            os.mkdir(out_model_dir)
+        np.save(file=f"{out_model_dir}/A_combined.npy", arr=A_combined)
+        logger.info("done.")
+
+    else:
+
+        logger.info("training the model...")
+        A_combined = train_TD_model(X=Xr, delay=config.TIME_DELAY, regularizer=config.REGULARIZER, logger=logger) # returns the augmented operator
+        logger.info("done.")
+
+    
+
+    # TODO: build the encoder and the decoder
+
+
+
+    # TODO: train the residual model
 
 
 

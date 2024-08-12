@@ -51,6 +51,9 @@ def prepare_training_set(data, logger):
         os.mkdir(out_xr_dir)
     np.save(file=f'{out_xr_dir}/xr.npy', arr=Xr)
 
+    # calculate the residual
+    X_res = X_train_scaled - (Vr @ Xr)
+
     # store true data after losing accuracy due to PCA
     logger.info("storing true data after pca projection...")
     X_true, time_pca = dataset_to_array(data,
@@ -74,7 +77,7 @@ def prepare_training_set(data, logger):
     X_test_dataset.to_zarr(f'{config.LARGE_OUT_PATH}/processed_test_set.nc')
 
 
-    return Xr, x_sub, Vr, scaler
+    return Xr, X_res, x_sub, Vr, scaler
 
 def dataset_to_array(data, variable_names, start_date, end_date):
     """

@@ -1,6 +1,9 @@
 
 # opinf config
+# POD_MODEL = None
+POD_MODEL = "/home/ahedayat/CASLab/projects/OpInf/Weather_POD/results/POD-10YEAR_vars=4_modes=100_Ac_TD=0_Reg=100/model/A_combined.npy"
 MODEL_STRUCTURE = "Ac" # linear: "Ac" , quadratic: "AHc"
+RES_MODEL_STRUCTURE = "Ac"
 TIME_DELAY = 0
 REGULARIZER = 0
 INCREMENTAL_FIT = False
