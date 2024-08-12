@@ -17,12 +17,14 @@ from data_processing import (dataset_to_array,
                              scale_train_test_data,
                              scale_data,
                              dimensionality_reduction,
-                             array_to_dataset_evaluation)
+                             array_to_dataset_evaluation,
+                             tensor_to_dataset)
 from model import (run_model,
                    run_TD_model,
                    run_TD_model_scipy,
                    run_TD_model_new)
 import pandas as pd
+import torch
 
 def L(lat_idx, lat_vector):
   lat_cos = np.cos((lat_vector[lat_idx])*np.pi/180)
@@ -80,7 +82,7 @@ def evaluate_model(pred_data, true_data):
         end_t = config.SNAPSHOT_PER_DAY*n_pred_days
         plot_xarray_movie_comparison(rom_pred, ground_truth, start_t=start_t, end_t=end_t, label=data_label, save_as=f'{config.OUT_PATH}/{data_label}_comp.gif')
 
-def generate_evaluation_trajectories(model, data, basis, scaler, logger, x_sub):
+def generate_evaluation_trajectories(base_model, residual_model, data, basis, scaler, logger, x_sub, encoder, decoder):
     
     latitude = data.latitude.values
     longitude = data.longitude.values
@@ -89,6 +91,7 @@ def generate_evaluation_trajectories(model, data, basis, scaler, logger, x_sub):
     init_idx = time_index.get_loc(config.EVAL_START_DATE)
 
     data_eval = data.isel(time=[i for i in range(init_idx, init_idx+(config.N_SKIP*(config.N_INIT)), config.N_SKIP)])
+
     X_init, time_init = dataset_to_array(data_eval,
                                         config.DATA_VARS,
                                         None,
@@ -97,6 +100,24 @@ def generate_evaluation_trajectories(model, data, basis, scaler, logger, x_sub):
     X_init_scaled = scaler.transform(X_init_subtracted.T).T
     Xr_init_scaled = basis.T @ X_init_scaled
 
+    # prepare initial conditions for the residual model
+    X_residual_init = X_init_scaled - (basis @ Xr_init_scaled)
+    X_residual_init_dataset = array_to_dataset(X=X_residual_init,
+                                               variable_names=config.DATA_VARS,
+                                               time_coords=time_init,
+                                               latitude_coords=latitude,
+                                               longitude_coords=longitude,
+                                               ref_dataset=data_eval)
+    # Ensure data is in the format [time, variable, longitude, latitude]
+    X_residual_init = X_residual_init_dataset.to_array().transpose('time', 'variable', 'longitude', 'latitude').values
+    # Convert to torch tensor
+    X_residual_init_tensor = torch.tensor(X_residual_init, dtype=torch.float32)
+    # encode
+    with torch.no_grad():
+        X_residual_init_tensor_encoded = encoder(X_residual_init_tensor).T # transpose to be in (latent, time) shape
+    X_residual_init_encoded = X_residual_init_tensor_encoded.cpu().numpy()
+
+    # prepare initial conditions for the base model
     for idx in range(init_idx-1, init_idx-config.TIME_DELAY-1, -1):
         data_eval_td = data.isel(time=[i for i in range(idx, idx+(config.N_SKIP*(config.N_INIT)), config.N_SKIP)])
         X_init_td, time_init_td = dataset_to_array(data_eval_td,
@@ -117,21 +138,48 @@ def generate_evaluation_trajectories(model, data, basis, scaler, logger, x_sub):
     all_predictions = []
 
     for i in range(config.N_INIT):
+        
         logger.info(f"\t\tgenerating trajectory {i}/{config.N_INIT-1}...")
-        x0 = Xr_init_scaled[:, i]  # Initial condition
-        # X_ROM, run_time = run_model(model, x0, config.TIME_DELAY, t_eval, config.DT, basis, scaler)
-        # X_ROM = run_TD_model(A_combined=model, x0_augmented=x0, num_steps=config.N_PRED, basis=basis, scaler=scaler)
-        # X_ROM = run_TD_model_scipy(A_combined=model, x0_augmented=x0, num_steps=config.N_PRED, basis=basis, scaler=scaler, method="BDF")
+
+        # simulate the base model
+        x0 = Xr_init_scaled[:, i]  # Initial condition for the base model
         # the following will return the predictions WITHOUT the initial condition attached
-        X_ROM = run_TD_model_new(A_combined=model, x0_augmented=x0, num_steps=config.N_PRED, basis=basis, scaler=scaler, method="RK45")
-        X_ROM = X_ROM + x_sub.reshape(-1,1) # add the subtracted state back to the predictions
+        Xr_sim = run_TD_model_new(A_combined=base_model, x0_augmented=x0, num_steps=config.N_PRED, method="RK45")
+        # lift back to the solution space
+        X_ROM_base = basis @ Xr_sim
+
+        # simulate the residual model
+        x0 = X_residual_init_encoded[:, i]  # Initial condition for the residual model
+        # the following will return the predictions WITHOUT the initial condition attached
+        X_latent_sim = run_TD_model_new(A_combined=residual_model, x0_augmented=x0, num_steps=config.N_PRED, method="RK45")
+        # lift back to the solution space
+        X_latent_sim_tensor = torch.tensor(X_latent_sim, dtype=torch.float32) # Convert to torch tensor
+        # decode
+        with torch.no_grad():
+          X_sim_tensor = decoder(X_latent_sim_tensor.T)
+        X_sim_dataset = tensor_to_dataset(X_sim_tensor,
+                                    t_eval_xarray[1:],
+                                    list(X_residual_init_dataset.data_vars),
+                                    X_residual_init_dataset.coords['longitude'],
+                                    X_residual_init_dataset.coords['latitude'])
+        X_ROM_residual, time_residual = dataset_to_array(X_sim_dataset,
+                                     config.DATA_VARS,
+                                     None,
+                                     None)
+
+        # correct the base prediction with the residual prediction
+        X_ROM_scaled = X_ROM_base + X_ROM_residual
+
+        # scale the predictions back to the physical range
+        X_ROM = scaler.inverse_transform(X_ROM_scaled.T).T
+
+        # add the subtracted state back to the predictions
+        X_ROM = X_ROM + x_sub.reshape(-1,1)
+
         # attach the initial condition at the beginning of the dataset
         x0_true = X_init[:,i].reshape(-1, 1)
         X_ROM = np.hstack((x0_true, X_ROM))
-        # check for unstable model
-        # if X_ROM.shape[1] != t_eval.size:
-        #    raise ValueError(f"Very unstable model. Consider decreasing the prediction steps or adding regularization.")
-        # logger.info(f"\t\tX_ROM shape: {X_ROM.shape}")
+        
         prediction_dataset = array_to_dataset_evaluation(X_ROM, config.DATA_VARS, t_eval_xarray, latitude, longitude, data)
         all_predictions.append(prediction_dataset)
 

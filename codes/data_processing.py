@@ -18,7 +18,7 @@ import config
 import dask.array as da
 import torch
 
-def prepare_training_set(data, logger):
+def prepare_training_set(data, encoder, logger):
 
     logger.info(f"loading data...")
     X_train, time_train = dataset_to_array(data,
@@ -26,6 +26,9 @@ def prepare_training_set(data, logger):
                                      config.TRAIN_START_DATE,
                                      config.TRAIN_END_DATE)
     logger.info(f"done.")
+
+    latitude = data.latitude.values
+    longitude = data.longitude.values
     
     # subtract the last state
     x_sub = X_train[:,-1].copy()
@@ -42,7 +45,7 @@ def prepare_training_set(data, logger):
 
     logger.info(f"performing dimensionality reduction using {config.DIM_RED_METHOD}...")
     Vr = dimensionality_reduction(data=X_train_scaled)
-    logger.info(f"\t\treduced dimension: {Vr.shape[0]}")
+    logger.info(f"\t\treduced dimension: {Vr.shape[1]}")
     logger.info("done.")
 
     Xr = Vr.T @ X_train_scaled # project onto the reduced manifold
@@ -52,9 +55,16 @@ def prepare_training_set(data, logger):
         os.mkdir(out_xr_dir)
     np.save(file=f'{out_xr_dir}/xr.npy', arr=Xr)
 
-    # calculate the residual
+    # calculate the residual dataset
     X_res = X_train_scaled - (Vr @ Xr)
     X_res_dataset = array_to_dataset(X_res, config.DATA_VARS, time_train, latitude, longitude, ref_dataset=data)
+    logger.info("encoding residual...")
+    X_res_encoded = encode_data(X_dataset=X_res_dataset, encoder=encoder)
+    out_sub_dir = f"{config.OUT_PATH}/encoded_residual"
+    if not os.path.exists(out_sub_dir):
+        os.mkdir(out_sub_dir)
+    np.save(file=f"{out_sub_dir}/X_res_encoded.npy", arr=X_res_encoded)
+    logger.info("done.")
 
     # store true data after losing accuracy due to PCA
     logger.info("storing true data after pca projection...")
@@ -67,19 +77,20 @@ def prepare_training_set(data, logger):
     X_true_scaled_reconstructed =  Vr @ (Vr.T @ X_true_scaled)
     X_pca = scaler.inverse_transform(X_true_scaled_reconstructed.T).T
     X_pca = X_pca + x_sub.reshape(-1,1) # add the last state back
-    latitude = data.latitude.values
-    longitude = data.longitude.values
     X_pca_dataset = array_to_dataset(X_pca, config.DATA_VARS, time_pca, latitude, longitude, ref_dataset=data)
     X_pca_dataset.to_zarr(f'{config.LARGE_OUT_PATH}/synthetic_true.nc')
+    logger.info("done.")
 
     # also store the processed training and test set before PCA projection (for other reduction techniques)
+    logger.info("storing processed training and test sets...")
     X_train_dataset = array_to_dataset(X_train_scaled, config.DATA_VARS, time_train, latitude, longitude, ref_dataset=data)
     X_train_dataset.to_zarr(f'{config.LARGE_OUT_PATH}/processed_training_set.nc')
     X_test_dataset = array_to_dataset(X_true_scaled, config.DATA_VARS, time_pca, latitude, longitude, ref_dataset=data)
     X_test_dataset.to_zarr(f'{config.LARGE_OUT_PATH}/processed_test_set.nc')
+    logger.info("done.")
 
 
-    return Xr, X_res_dataset, x_sub, Vr, scaler
+    return Xr, X_res_encoded, x_sub, Vr, scaler
 
 def dataset_to_array(data, variable_names, start_date, end_date):
     """
@@ -437,5 +448,40 @@ def encode_data(X_dataset, encoder):
     with torch.no_grad():
         X_tensor_encoded = encoder(X_tensor).T # transpose to be in (latent, time) shape
 
-    return X_tensor_encoded
+    return X_tensor_encoded.cpu().numpy()
+
+def tensor_to_dataset(tensor, time_coords, variable_coords, longitude_coords, latitude_coords):
+    """
+    Converts a PyTorch tensor back to an xarray dataset.
+    
+    Parameters:
+    - tensor (torch.Tensor): The input tensor with shape [time, variable, longitude, latitude].
+    - time_coords (array-like): Coordinates for the 'time' dimension.
+    - variable_coords (array-like): Coordinates for the 'variable' dimension.
+    - longitude_coords (array-like): Coordinates for the 'longitude' dimension.
+    - latitude_coords (array-like): Coordinates for the 'latitude' dimension.
+    
+    Returns:
+    - ds (xarray.Dataset): The resulting xarray dataset.
+    """
+    
+    # Ensure the tensor is a numpy array
+    data_np = tensor.numpy()
+    
+    # Create the xarray data array
+    data_array = xr.DataArray(
+        data_np,
+        dims=['time', 'variable', 'longitude', 'latitude'],
+        coords={
+            'variable': variable_coords,
+            'latitude': latitude_coords,
+            'longitude': longitude_coords,
+            'time': time_coords,
+        }
+    )
+    
+    # Convert the DataArray to a Dataset
+    ds = data_array.to_dataset(dim='variable')
+    
+    return ds
 

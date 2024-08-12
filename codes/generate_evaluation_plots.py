@@ -32,17 +32,17 @@ comp_paths = [
 # opinf model paths
 opinf_cases = [
     "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=100_Constant",
-    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=100_AHc_TD=0_Reg=100000",
-    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=100_AHc_TD=2_Reg=100000",
-    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=100_AHc_TD=3_Reg=100000"
+    "/scratch/engin_root/engin1/ahedayat/results/HYBRID-10YEAR_vars=4_modes=100_Ac_TD=0_Reg=0",
+    "/scratch/engin_root/engin1/ahedayat/results/HYBRID-10YEAR_vars=4_modes=100_Ac_TD=2_Reg=1000",
+    "/scratch/engin_root/engin1/ahedayat/results/HYBRID-10YEAR_vars=4_modes=100_Ac_TD=5_Reg=1000"
 ]
 
 case_labels = [
     "IFS-HRES",
     "constant",
-    "nonlinear_vars=4_modes=100_TD=0_Reg=100000",
-    "nonlinear_vars=4_modes=100_TD=2_Reg=100000",
-    "nonlinear_vars=4_modes=100_TD=3_Reg=100000"
+    "linear_vars=4_modes=100_TD=0_Reg=0",
+    "linear_vars=4_modes=100_TD=2_Reg=1000",
+    "linear_vars=4_modes=100_TD=5_Reg=1000"
 ]
 
 # ground truth path
@@ -53,7 +53,7 @@ obs_name_pred = "true"
 # obs_name_pred = "pod"
 
 # where to store results
-eval_name = "POD-10YEAR_vars=4_modes=100"
+eval_name = "HYBRID-10YEAR_vars=4_modes=100"
 output_path = f"./evaluation_results/{eval_name}"
 if not os.path.isdir(output_path):
     os.mkdir(output_path)

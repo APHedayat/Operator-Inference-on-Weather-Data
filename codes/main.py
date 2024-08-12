@@ -83,8 +83,15 @@ def main():
 
 
 
+    # build the encoder and the decoder
+    logger.info("creating encoder/decoder...")
+    encoder, decoder = build_encoder_decoder(path_to_convAE_weights=config.AE_WEIGHTS_PATH)
+    logger.info("done.")
+
+
+
     # prepare the training set
-    if config.PREPARED_TRAINING_SET_PATH:
+    if config.TRAINING_DATA_AVAILABLE:
 
         logger.info(f"reading the prepared training set...")
         Xr = np.load(file=config.PREPARED_TRAINING_SET_PATH)
@@ -103,53 +110,30 @@ def main():
         Vr = np.load(file=config.BASIS_PATH)
         logger.info("done.")
 
-        logger.info(f"creating the residual dataset...")
-        X_train, time_train = dataset_to_array(data,
-                                     config.DATA_VARS,
-                                     config.TRAIN_START_DATE,
-                                     config.TRAIN_END_DATE)
-        X_train = X_train - x_sub.reshape(-1,1)
-        X_train_scaled = scaler.transform(X_train.T).T
-        X_res = X_train_scaled - (Vr @ Xr)
-        latitude = data.latitude
-        longitude = data.longitude
-        X_res_dataset = array_to_dataset(X_res, config.DATA_VARS, time_train, latitude, longitude, ref_dataset=data)
+        logger.info(f"reading the encoded residual...")
+        X_res_encoded = np.load(file=config.ENCODED_RESIDUAL_PATH)
         logger.info("done.")
 
     else:
 
-        Xr, X_res_dataset, x_sub, Vr, scaler = prepare_training_set(data=data, logger=logger)
+        Xr, X_res_encoded, x_sub, Vr, scaler = prepare_training_set(data=data, encoder=encoder, logger=logger)
 
 
 
     # train the base model
-    if config.POD_MODEL:
-
-        logger.info(f"reading the base model...")
-        A_combined = np.load(file=config.POD_MODEL)
-        out_model_dir = f"{config.OUT_PATH}/model"
-        if not os.path.exists(out_model_dir):
-            os.mkdir(out_model_dir)
-        np.save(file=f"{out_model_dir}/A_combined.npy", arr=A_combined)
-        logger.info("done.")
-
-    else:
-
-        logger.info("training the base model...")
-        A_combined = train_TD_model(X=Xr, delay=config.TIME_DELAY, regularizer=config.REGULARIZER, logger=logger) # returns the augmented operator
-        logger.info("done.")
-
-    
-
-    # build the encoder and the decoder
-    encoder, decoder = build_encoder_decoder(path_to_convAE_weights=config.AE_WEIGHTS_PATH)
-    X_res_encoded = encode_data(X_dataset=X_res_dataset, encoder=encoder)
+    logger.info("training the base model...")
+    A_combined = train_TD_model(X=Xr, delay=config.TIME_DELAY,
+                                save_model_name="A_combined.npy",
+                                regularizer=config.REGULARIZER,
+                                logger=logger) # returns the augmented operator
+    logger.info("done.")
 
 
 
     # train the residual model
     logger.info("training the residual model...")
     B_combined = train_TD_model(X=X_res_encoded, model_structure=config.RES_MODEL_STRUCTURE,
+                                save_model_name="B_combined.npy",
                                 delay=0, regularizer=config.RES_MODEL_REGULARIZER,
                                 logger=logger) # returns the augmented operator
     logger.info("done.")
@@ -158,7 +142,9 @@ def main():
 
     # TODO: create the evaluation dataset
     logger.info("evalating the model (generating trajectories)...")
-    generate_evaluation_trajectories(model=A_combined, data=data, basis=Vr, scaler=scaler, logger=logger, x_sub=x_sub)
+    generate_evaluation_trajectories(base_model=A_combined, residual_model=B_combined,
+                                     data=data, basis=Vr, scaler=scaler, logger=logger,
+                                     x_sub=x_sub, encoder=encoder, decoder=decoder)
     logger.info("done.")
 
 

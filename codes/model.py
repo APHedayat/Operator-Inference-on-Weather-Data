@@ -37,7 +37,7 @@ def train_model(prepared_data, save_model=True, regularizer=config.REGULARIZER):
 
     return rom
 
-def train_TD_model(X, model_structure = config.MODEL_STRUCTURE, delay=config.TIME_DELAY, save_model=True, regularizer=0, logger=None):
+def train_TD_model(X, model_structure = config.MODEL_STRUCTURE, delay=config.TIME_DELAY, save_model_name=None, regularizer=0, logger=None):
 
     X_prime = opinf.ddt.ddt_uniform(X, config.DT, order=4)
   
@@ -98,11 +98,11 @@ def train_TD_model(X, model_structure = config.MODEL_STRUCTURE, delay=config.TIM
         A_combined = solver.solve()
 
     # save the model
-    if save_model:
+    if save_model_name:
         out_model_dir = f"{config.OUT_PATH}/model"
         if not os.path.exists(out_model_dir):
             os.mkdir(out_model_dir)
-        np.save(file=f"{out_model_dir}/A_combined.npy", arr=A_combined)
+        np.save(file=f"{out_model_dir}/{save_model_name}", arr=A_combined)
 
     # return the combined operator
     return A_combined
@@ -214,7 +214,7 @@ def run_TD_model(A_combined, x0_augmented, num_steps, basis, scaler, model_struc
     return X_sim
 
 # this is the new run method that takes advantage of scipy's capabilities
-def run_TD_model_new(A_combined, x0_augmented, num_steps, basis, scaler, model_structure=config.MODEL_STRUCTURE, method="RK45"):
+def run_TD_model_new(A_combined, x0_augmented, num_steps, model_structure=config.MODEL_STRUCTURE, method="RK45"):
 
     x0_d = x0_augmented.copy() # create copy to avoid changing values
     r = A_combined.shape[0]
@@ -269,14 +269,8 @@ def run_TD_model_new(A_combined, x0_augmented, num_steps, basis, scaler, model_s
             x_prevs[:r] = x_current.copy()
         # current
         x_current = sol.copy()
-        
-
-
-    # lift and scale back to the solution space
-    X_sim_scaled = basis @ Xr_sim
-    X_sim = scaler.inverse_transform(X_sim_scaled.T).T
     
-    return X_sim
+    return Xr_sim
 
 
 # Still working on this
@@ -369,7 +363,7 @@ def build_encoder_decoder(path_to_convAE_weights):
 
     # load the model
     model = conv_networks.convAutoencoder2dV1(opt = model_opt)
-    model.load_state_dict(torch.load(path_to_convAE_weights))
+    model.load_state_dict(torch.load(path_to_convAE_weights, map_location=torch.device('cpu')))
 
     # define the general structure of the encoder
     class Encoder(torch.nn.Module):

@@ -1,11 +1,9 @@
 
 # opinf config
-# POD_MODEL = None
-POD_MODEL = "/home/ahedayat/CASLab/projects/OpInf/Weather_POD/results/POD-10YEAR_vars=4_modes=100_Ac_TD=0_Reg=100/model/A_combined.npy"
 MODEL_STRUCTURE = "Ac" # linear: "Ac" , quadratic: "AHc"
 RES_MODEL_STRUCTURE = "Ac"
-TIME_DELAY = 0
-REGULARIZER = 0
+TIME_DELAY = 5
+REGULARIZER = 1000
 RES_MODEL_REGULARIZER = 0
 INCREMENTAL_FIT = False
 CHUNK_SIZE = 1000 # only if INCREMENTAL_FIT = True
@@ -27,11 +25,12 @@ SNAPSHOT_PER_DAY = 4
 SCALING_METHOD = "normalize"
 
 # pod and scaling config
-# PREPARED_TRAINING_SET_PATH = None
-PREPARED_TRAINING_SET_PATH = "../results/POD-10YEAR_vars=4_modes=100_BASE-DATA/reduced_training_set/xr.npy"
-SUBTRACTED_PATH = "../results/POD-10YEAR_vars=4_modes=100_BASE-DATA/subtract/x_sub.npy"
-BASIS_PATH = "../results/POD-10YEAR_vars=4_modes=100_BASE-DATA/basis/basis.npy"
-SCALER_PATH = "../results/POD-10YEAR_vars=4_modes=100_BASE-DATA/scaler/scaler.pkl"
+TRAINING_DATA_AVAILABLE = True
+PREPARED_TRAINING_SET_PATH = "../results/HYBRID-10YEAR_vars=4_modes=100_BASE-DATA/reduced_training_set/xr.npy"
+ENCODED_RESIDUAL_PATH = "../results/HYBRID-10YEAR_vars=4_modes=100_BASE-DATA/encoded_residual/X_res_encoded.npy"
+SUBTRACTED_PATH = "../results/HYBRID-10YEAR_vars=4_modes=100_BASE-DATA/subtract/x_sub.npy"
+BASIS_PATH = "../results/HYBRID-10YEAR_vars=4_modes=100_BASE-DATA/basis/basis.npy"
+SCALER_PATH = "../results/HYBRID-10YEAR_vars=4_modes=100_BASE-DATA/scaler/scaler.pkl"
 NUM_POD_MODES = 100 # only if PREPARED_TRAINING_SET_PATH = None
 POD_ENERGY_CUTOFF = 0.99 # only if PREPARED_TRAINING_SET_PATH = None and DIM_RED_METHOD = "POD"
 DIM_RED_METHOD = "Randomized_POD" # only if PREPARED_TRAINING_SET_PATH = None
