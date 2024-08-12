@@ -25,44 +25,14 @@ logger = logging.getLogger()
 
 
 opinf_cases = [
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_constant",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=0_Reg=0",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=0_Reg=100",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=0_Reg=1000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=0_Reg=10000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=0_Reg=100000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=0_Reg=1000000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=2_Reg=0",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=2_Reg=100",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=2_Reg=1000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=2_Reg=10000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=2_Reg=100000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=2_Reg=1000000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=5_Reg=0",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=5_Reg=100",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=5_Reg=1000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=5_Reg=10000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=5_Reg=100000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=5_Reg=1000000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=10_Reg=0",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=10_Reg=100",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=10_Reg=1000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=10_Reg=10000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=10_Reg=100000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=10_Reg=1000000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_AHc_vars=4_modes=50_TD=0_Reg=0",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_AHc_vars=4_modes=50_TD=0_Reg=100",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_AHc_vars=4_modes=50_TD=0_Reg=1000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_AHc_vars=4_modes=50_TD=0_Reg=10000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_AHc_vars=4_modes=50_TD=0_Reg=100000",
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_AHc_vars=4_modes=50_TD=0_Reg=1000000",
+    "FULL-DATASET-TRAIN_SINGLE_TRAJ_AHc_vars=4_modes=50_TD=3_Reg=100000"
 ]
 
 variables = ['2m_temperature', '10m_u_component_of_wind']
 
 # ground truth
 data_true = xr.open_zarr(config.DATA_PATH)
-data_true_pod = xr.open_zarr(f"/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_BASE-DATA/true.nc")
+data_true_pod = xr.open_zarr(f"/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_BASE-DATA_50-MODES/synthetic_true.nc")
 
 # define prediction snapshots
 pred_snaps = [0, 15, 30]

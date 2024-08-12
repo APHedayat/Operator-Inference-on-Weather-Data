@@ -31,58 +31,29 @@ comp_paths = [
 
 # opinf model paths
 opinf_cases = [
-    "/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_SINGLE_TRAJ_constant",
-    "/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_SINGLE_TRAJ_AHc_vars=4_modes=50_TD=0_Reg=0",
-    "/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_SINGLE_TRAJ_AHc_vars=4_modes=50_TD=0_Reg=100",
-    "/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_SINGLE_TRAJ_AHc_vars=4_modes=50_TD=0_Reg=1000",
-    "/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_SINGLE_TRAJ_AHc_vars=4_modes=50_TD=0_Reg=10000",
-    "/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_SINGLE_TRAJ_AHc_vars=4_modes=50_TD=0_Reg=100000",
-    "/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_SINGLE_TRAJ_AHc_vars=4_modes=50_TD=0_Reg=1000000",
-    "/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_SINGLE_TRAJ_AHc_vars=4_modes=50_TD=2_Reg=100000",
-    "/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_SINGLE_TRAJ_AHc_vars=4_modes=50_TD=3_Reg=100000",
-    "/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_SINGLE_TRAJ_AHc_vars=4_modes=50_TD=4_Reg=100000"
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=100_Constant",
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=100_AHc_TD=0_Reg=100000",
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=100_AHc_TD=2_Reg=100000",
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=100_AHc_TD=3_Reg=100000"
 ]
 
 case_labels = [
     "IFS-HRES",
     "constant",
-    "quadratic_vars=4_modes=50_TD=0_Reg=0",
-    "quadratic_vars=4_modes=50_TD=0_Reg=100",
-    "quadratic_vars=4_modes=50_TD=0_Reg=1000",
-    "quadratic_vars=4_modes=50_TD=0_Reg=10000",
-    "quadratic_vars=4_modes=50_TD=0_Reg=100000",
-    "quadratic_vars=4_modes=50_TD=0_Reg=1000000",
-    "quadratic_vars=4_modes=50_TD=2_Reg=100000",
-    "quadratic_vars=4_modes=50_TD=3_Reg=100000",
-    "quadratic_vars=4_modes=50_TD=4_Reg=100000"
+    "nonlinear_vars=4_modes=100_TD=0_Reg=100000",
+    "nonlinear_vars=4_modes=100_TD=2_Reg=100000",
+    "nonlinear_vars=4_modes=100_TD=3_Reg=100000"
 ]
-
-# opinf_cases = [
-#     "/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_SINGLE_TRAJ_constant",
-#     "/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=0_Reg=100",
-#     "/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=2_Reg=1000",
-#     "/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=5_Reg=1000",
-#     "/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_SINGLE_TRAJ_Ac_vars=4_modes=50_TD=10_Reg=1000"
-# ]
-
-# case_labels = [
-#     "IFS-HRES",
-#     "constant",
-#     "linar_vars=4_modes=50_TD=0_Reg=100",
-#     "linar_vars=4_modes=50_TD=2_Reg=1000",
-#     "linar_vars=4_modes=50_TD=5_Reg=1000",
-#     "linar_vars=4_modes=50_TD=10_Reg=1000"
-# ]
 
 # ground truth path
 obs_path = c.DATA_PATH
 obs_path_pred = obs_path
 obs_name_pred = "true"
-# obs_path_pred = "/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_BASE-DATA/true.nc"
+# obs_path_pred = "/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_BASE-DATA/synthetic_true.nc"
 # obs_name_pred = "pod"
 
 # where to store results
-eval_name = "FULL-DATASET-TRAIN_SINGLE_TRAJ"
+eval_name = "POD-10YEAR_vars=4_modes=100"
 output_path = f"./evaluation_results/{eval_name}"
 if not os.path.isdir(output_path):
     os.mkdir(output_path)
