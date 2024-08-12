@@ -65,11 +65,13 @@ def prepare_training_set(data, logger):
     latitude = data.latitude.values
     longitude = data.longitude.values
     X_pca_dataset = array_to_dataset(X_pca, config.DATA_VARS, time_pca, latitude, longitude, ref_dataset=data)
-    X_pca_dataset.to_zarr(f'{config.LARGE_OUT_PATH}/true.nc')
+    X_pca_dataset.to_zarr(f'{config.LARGE_OUT_PATH}/synthetic_true.nc')
 
-    # also store the processed training set before PCA projection (for other reduction techniques)
+    # also store the processed training and test set before PCA projection (for other reduction techniques)
     X_train_dataset = array_to_dataset(X_train_scaled, config.DATA_VARS, time_train, latitude, longitude, ref_dataset=data)
     X_train_dataset.to_zarr(f'{config.LARGE_OUT_PATH}/processed_training_set.nc')
+    X_test_dataset = array_to_dataset(X_true_scaled, config.DATA_VARS, time_pca, latitude, longitude, ref_dataset=data)
+    X_test_dataset.to_zarr(f'{config.LARGE_OUT_PATH}/processed_test_set.nc')
 
 
     return Xr, x_sub, Vr, scaler
