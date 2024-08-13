@@ -301,9 +301,13 @@ def pod(data):
     V, svdvals = opinf.basis.pod_basis(data)
     end_time = time.time()
 
+    out_basis_dir = f"{config.OUT_PATH}/basis"
+    if not os.path.exists(out_basis_dir):
+        os.mkdir(out_basis_dir)
+
     r = opinf.basis.cumulative_energy(svdvals, config.POD_ENERGY_CUTOFF, plot=True)
     plt.tight_layout()
-    plt.savefig(f'{config.OUT_PATH}/POD_energy.pdf')
+    plt.savefig(f'{config.OUT_PATH}/POD_energy_{config.POD_ENERGY_CUTOFF}.pdf')
     plt.close()
     print(f"\nr = {r:d} singular values exceed {config.POD_ENERGY_CUTOFF:.4%} energy")
     Vr = V[:, :r]
@@ -315,10 +319,8 @@ def pod(data):
     print(f"Shape of Vr: {Vr.shape}")
 
     # save the basis
-    out_basis_dir = f"{config.OUT_PATH}/basis"
-    if not os.path.exists(out_basis_dir):
-        os.mkdir(out_basis_dir)
-    np.save(file=f'{out_basis_dir}/basis.npy', arr=Vr)
+    np.save(file=f'{out_basis_dir}/full_basis.npy', arr=V)
+    np.save(file=f'{out_basis_dir}/reduced_basis_{config.POD_ENERGY_CUTOFF}.npy', arr=Vr)
 
     return Vr
 
