@@ -32,7 +32,7 @@ comp_paths = [
 # opinf model paths
 opinf_cases = [
     "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=100_Constant",
-    "/scratch/engin_root/engin1/ahedayat/results/HYBRID-10YEAR_vars=4_modes=100_Ac_TD=0_Reg=0",
+    "/scratch/engin_root/engin1/ahedayat/results/HYBRID-10YEAR_vars=4_modes=100_Ac_TD=0_Reg=100",
     "/scratch/engin_root/engin1/ahedayat/results/HYBRID-10YEAR_vars=4_modes=100_Ac_TD=2_Reg=1000",
     "/scratch/engin_root/engin1/ahedayat/results/HYBRID-10YEAR_vars=4_modes=100_Ac_TD=5_Reg=1000"
 ]
@@ -40,7 +40,7 @@ opinf_cases = [
 case_labels = [
     "IFS-HRES",
     "constant",
-    "linear_vars=4_modes=100_TD=0_Reg=0",
+    "linear_vars=4_modes=100_TD=0_Reg=100",
     "linear_vars=4_modes=100_TD=2_Reg=1000",
     "linear_vars=4_modes=100_TD=5_Reg=1000"
 ]

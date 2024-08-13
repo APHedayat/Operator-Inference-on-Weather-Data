@@ -2,14 +2,14 @@
 # opinf config
 MODEL_STRUCTURE = "Ac" # linear: "Ac" , quadratic: "AHc"
 RES_MODEL_STRUCTURE = "Ac"
-TIME_DELAY = 5
-REGULARIZER = 1000
-RES_MODEL_REGULARIZER = 0
+TIME_DELAY = 0
+REGULARIZER = 100
+RES_MODEL_REGULARIZER = 100
 INCREMENTAL_FIT = False
 CHUNK_SIZE = 1000 # only if INCREMENTAL_FIT = True
 
 # convolutional autoencoder config
-AE_WEIGHTS_PATH = "../results/POD-10YEAR_vars=4_modes=100_BASE-DATA/convAE/weights_end.pt"
+AE_WEIGHTS_PATH = "../results/HYBRID-10YEAR_vars=4_modes=100_BASE-DATA/convAE/10YEAR_RES_0811_16_07_33/weights_val_best.pt"
 
 # data config
 DATA_VARS = ['2m_temperature', '10m_u_component_of_wind',

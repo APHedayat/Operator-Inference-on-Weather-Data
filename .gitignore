@@ -19,3 +19,6 @@ __pycache__/
 # Ignore test files
 test*
 
+# Ignore pdf files
+*.pdf
+
