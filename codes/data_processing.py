@@ -6,10 +6,6 @@ import matplotlib.pyplot as plt
 plt.rcParams.update({'font.size': 14}) # set the font size globally
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, FunctionTransformer
 from sklearn.utils.extmath import randomized_svd
-from sklearn.decomposition import (KernelPCA,
-                                   FastICA,
-                                   NMF,
-                                   )
 import os
 import pickle
 import time
@@ -305,11 +301,18 @@ def pod(data):
     if not os.path.exists(out_basis_dir):
         os.mkdir(out_basis_dir)
 
-    r = opinf.basis.cumulative_energy(svdvals, config.POD_ENERGY_CUTOFF, plot=True)
-    plt.tight_layout()
-    plt.savefig(f'{config.OUT_PATH}/POD_energy_{config.POD_ENERGY_CUTOFF}.pdf')
-    plt.close()
-    print(f"\nr = {r:d} singular values exceed {config.POD_ENERGY_CUTOFF:.4%} energy")
+    if config.NUM_POD_MODES < 1:
+
+        r = opinf.basis.cumulative_energy(svdvals, config.NUM_POD_MODES, plot=True)
+        plt.tight_layout()
+        plt.savefig(f'{config.OUT_PATH}/POD_energy_{config.NUM_POD_MODES}.pdf')
+        plt.close()
+        print(f"\nr = {r:d} singular values exceed {config.NUM_POD_MODES:.4%} energy")
+
+    else:
+
+        r = config.NUM_POD_MODES
+
     Vr = V[:, :r]
     wall_time_seconds = end_time - start_time
     hours = int(wall_time_seconds // 3600)
@@ -320,7 +323,7 @@ def pod(data):
 
     # save the basis
     np.save(file=f'{out_basis_dir}/full_basis.npy', arr=V)
-    np.save(file=f'{out_basis_dir}/reduced_basis_{config.POD_ENERGY_CUTOFF}.npy', arr=Vr)
+    np.save(file=f'{out_basis_dir}/reduced_basis_modes={config.NUM_POD_MODES}.npy', arr=Vr)
 
     return Vr
 
@@ -345,36 +348,6 @@ def randomized_pod(data):
 
     return Vr
 
-def kpca(data):
-    kpca = KernelPCA(n_components=config.NUM_POD_MODES, kernel='rbf')
-    reduced_data = kpca.fit_transform(data)
-    # save the basis
-    out_basis_dir = f"{config.OUT_PATH}/basis"
-    if not os.path.exists(out_basis_dir):
-        os.mkdir(out_basis_dir)
-    np.save(file=f'{out_basis_dir}/basis.npy', arr=reduced_data)
-    return reduced_data
-
-def ica(data):
-    ica = FastICA(n_components=config.NUM_POD_MODES)
-    reduced_data = ica.fit_transform(data.T).T
-    # save the basis
-    out_basis_dir = f"{config.OUT_PATH}/basis"
-    if not os.path.exists(out_basis_dir):
-        os.mkdir(out_basis_dir)
-    np.save(file=f'{out_basis_dir}/basis.npy', arr=reduced_data)
-    return reduced_data
-
-def nmf(data):
-    nmf = NMF(n_components=config.NUM_POD_MODES)
-    reduced_data = nmf.fit_transform(data.T).T
-    # save the basis
-    out_basis_dir = f"{config.OUT_PATH}/basis"
-    if not os.path.exists(out_basis_dir):
-        os.mkdir(out_basis_dir)
-    np.save(file=f'{out_basis_dir}/basis.npy', arr=reduced_data)
-    return reduced_data
-
 def dask_pod(data):
 
     dask_data = da.from_array(data, chunks=(data.shape[0], config.DASK_CHUNK_SIZE)) # make chunks tall and skinny
@@ -384,11 +357,11 @@ def dask_pod(data):
     V, svdvals, Vt = V.compute(), svdvals.compute(), Vt.compute()
     end_time = time.time()
 
-    r = opinf.basis.cumulative_energy(svdvals, config.POD_ENERGY_CUTOFF, plot=True)
+    r = opinf.basis.cumulative_energy(svdvals, config.NUM_POD_MODES, plot=True)
     plt.tight_layout()
     plt.savefig(f'{config.OUT_PATH}/POD_energy.pdf')
     plt.close()
-    print(f"\nr = {r:d} singular values exceed {config.POD_ENERGY_CUTOFF:.4%} energy")
+    print(f"\nr = {r:d} singular values exceed {config.NUM_POD_MODES:.4%} energy")
     Vr = V[:, :r]
     wall_time_seconds = end_time - start_time
     hours = int(wall_time_seconds // 3600)
@@ -410,12 +383,6 @@ def dimensionality_reduction(data):
         return pod(data)
     elif config.DIM_RED_METHOD == 'Randomized_POD':
         return randomized_pod(data)
-    elif config.DIM_RED_METHOD == 'KPCA':
-        return kpca(data)
-    elif config.DIM_RED_METHOD == 'ICA':
-        return ica(data)
-    elif config.DIM_RED_METHOD == 'NMF':
-        return nmf(data)
     elif config.DIM_RED_METHOD == 'Dask_POD':
         return dask_pod(data)
     else:

@@ -1,8 +1,8 @@
 
 # opinf config
 MODEL_STRUCTURE = "Ac" # linear: "Ac" , quadratic: "AHc"
-TIME_DELAY = 10
-REGULARIZER = 10000
+TIME_DELAY = 0
+REGULARIZER = 0
 INCREMENTAL_FIT = False
 CHUNK_SIZE = 1000 # only if INCREMENTAL_FIT = True
 
@@ -20,13 +20,12 @@ SNAPSHOT_PER_DAY = 4
 SCALING_METHOD = "normalize"
 
 # pod and scaling config
-# PREPARED_TRAINING_SET_PATH = None
-PREPARED_TRAINING_SET_PATH = "../results/POD-10YEAR_vars=4_modes=full_BASE-DATA/reduced_training_set/xr.npy"
+PREPARED_TRAINING_SET_PATH = None
+# PREPARED_TRAINING_SET_PATH = "../results/POD-10YEAR_vars=4_modes=full_BASE-DATA/reduced_training_set/xr.npy"
 SUBTRACTED_PATH = "../results/POD-10YEAR_vars=4_modes=full_BASE-DATA/subtract/x_sub.npy"
 BASIS_PATH = "../results/POD-10YEAR_vars=4_modes=full_BASE-DATA/basis/reduced_basis_0.99.npy"
 SCALER_PATH = "../results/POD-10YEAR_vars=4_modes=full_BASE-DATA/scaler/scaler.pkl"
-NUM_POD_MODES = 100 # only if PREPARED_TRAINING_SET_PATH = None
-POD_ENERGY_CUTOFF = 0.99 # only if PREPARED_TRAINING_SET_PATH = None and DIM_RED_METHOD = "POD"
+NUM_POD_MODES = 1000 # only if PREPARED_TRAINING_SET_PATH = None, int > 1 or float < 1
 DIM_RED_METHOD = "POD" # only if PREPARED_TRAINING_SET_PATH = None
 DASK_CHUNK_SIZE = 100 # only if DIM_RED_METHOD = "Dask_POD"
 
@@ -42,8 +41,8 @@ DT_ACTUAL = 6 # dt in hours
 # path config
 DATA_PATH = "/scratch/engin_root/engin1/ahedayat/data/era5/1959-2022-6h-240x121_equiangular_with_poles_conservative.zarr"
 TEST_GROUP_NAME = "POD-10YEAR"
-# CASE_NAME = f"{TEST_GROUP_NAME}_vars={len(DATA_VARS)}_modes=full_BASE-DATA"
-# CASE_NAME = f"{TEST_GROUP_NAME}_vars={len(DATA_VARS)}_modes=full_Constant"
-CASE_NAME = f"{TEST_GROUP_NAME}_vars={len(DATA_VARS)}_modes=full_{MODEL_STRUCTURE}_TD={TIME_DELAY}_Reg={REGULARIZER}"
+CASE_NAME = f"{TEST_GROUP_NAME}_vars={len(DATA_VARS)}_modes={NUM_POD_MODES}_BASE-DATA"
+# CASE_NAME = f"{TEST_GROUP_NAME}_vars={len(DATA_VARS)}_modes={NUM_POD_MODES}_Constant"
+# CASE_NAME = f"{TEST_GROUP_NAME}_vars={len(DATA_VARS)}_modes={NUM_POD_MODES}_{MODEL_STRUCTURE}_TD={TIME_DELAY}_Reg={REGULARIZER}"
 OUT_PATH = f"../results/{CASE_NAME}"
 LARGE_OUT_PATH = f"/scratch/engin_root/engin1/ahedayat/results/{CASE_NAME}"
