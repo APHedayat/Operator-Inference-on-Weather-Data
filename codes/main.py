@@ -36,9 +36,11 @@ from model import (train_model,
                    check_stability,
                    run_model,
                    train_TD_model,
-                   run_TD_model)
+                   run_TD_model,
+                   train_discrete_TD_model)
 from evaluation import (evaluate_model,
-                        generate_evaluation_trajectories)
+                        generate_evaluation_trajectories,
+                        generate_discrete_evaluation_trajectories)
 import logging
 import pandas as pd
 import pickle
@@ -109,14 +111,14 @@ def main():
 
     # train the model
     logger.info("training the model...")
-    A_combined = train_TD_model(X=Xr, delay=config.TIME_DELAY, regularizer=config.REGULARIZER, logger=logger) # returns the augmented operator
+    A_combined = train_discrete_TD_model(X=Xr, delay=config.TIME_DELAY, regularizer=config.REGULARIZER, logger=logger) # returns the augmented operator
     logger.info("done.")
 
 
 
     # create the evaluation dataset
     logger.info("evalating the model (generating trajectories)...")
-    generate_evaluation_trajectories(model=A_combined, data=data, basis=Vr, scaler=scaler, logger=logger, x_sub=x_sub)
+    generate_discrete_evaluation_trajectories(model=A_combined, data=data, basis=Vr, scaler=scaler, logger=logger, x_sub=x_sub)
     logger.info("done.")
 
 

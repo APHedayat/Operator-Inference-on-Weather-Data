@@ -105,6 +105,71 @@ def train_TD_model(X, model_structure = config.MODEL_STRUCTURE, delay=config.TIM
     # return the combined operator
     return A_combined
 
+def train_discrete_TD_model(X, model_structure = config.MODEL_STRUCTURE, delay=config.TIME_DELAY, save_model=True, regularizer=0, logger=None):
+  
+    # Create the delayed data matrix X_d
+    X_d_list = []
+    for t in range(delay, X.shape[1]-1):
+        delayed_snapshots = [X[:, t-i] for i in range(delay+1)]
+        X_d_list.append(np.concatenate(delayed_snapshots, axis=0))
+    X_d = np.array(X_d_list).T
+
+    # add quadratic terms
+    if model_structure == "AHc":
+        X_d_quad = opinf.operators.QuadraticOperator.ckron(X_d, checkdim=False)
+        X_d = np.vstack((X_d, X_d_quad))
+
+    ones_row = np.ones((1, X_d.shape[1])) # Add a row of ones for the constant term
+    X_d = np.vstack([X_d, ones_row])
+
+    # Corresponding next states matrix, starting from the (delay+1)th snapshot
+    X_nexts = X[:, 1+delay:]
+
+    # use opinf lstsq functions
+    solver = opinf.lstsq.L2Solver(regularizer=regularizer)
+
+    # batch fitting or single fit
+    if config.INCREMENTAL_FIT:
+
+        def incremental_fit(data_matrix, lhs_matrix, solver, chunk_size=1000):
+            num_samples = data_matrix.shape[1]
+            operators = []
+
+            counter = 0
+            
+            for start in range(0, num_samples, chunk_size):
+
+                counter += 1
+                logger.info(f"\t\tfitting chunk {counter}/{(num_samples // chunk_size) + 1}...")
+
+                end = min(start + chunk_size, num_samples)
+                chunk_data_matrix = data_matrix[:, start:end]
+                chunk_lhs_matrix = lhs_matrix[:, start:end]
+                
+                solver.fit(data_matrix=chunk_data_matrix.T, lhs_matrix=chunk_lhs_matrix)
+                operators.append(solver.solve())
+            
+            # Combine operators from each chunk
+            A_combined = np.mean(operators, axis=0)  # Simple average; adjust as necessary
+            return A_combined
+        
+        A_combined = incremental_fit(data_matrix=X_d, lhs_matrix=X_nexts, solver=solver, chunk_size=config.CHUNK_SIZE)
+
+    else:
+
+        solver.fit(data_matrix=X_d.T, lhs_matrix=X_nexts)
+        A_combined = solver.solve()
+
+    # save the model
+    if save_model:
+        out_model_dir = f"{config.OUT_PATH}/model"
+        if not os.path.exists(out_model_dir):
+            os.mkdir(out_model_dir)
+        np.save(file=f"{out_model_dir}/A_combined.npy", arr=A_combined)
+
+    # return the combined operator
+    return A_combined
+
 def check_stability(model):
     # get the eigenvalues
     evals, evecs = np.linalg.eig(model.A_.entries)
@@ -336,4 +401,61 @@ def run_TD_model_scipy(A_combined, x0_augmented, num_steps, basis, scaler, metho
     
     return X_sim
 
+
+def run_discrete_TD_model_new(A_combined, x0_augmented, num_steps, basis, scaler, model_structure=config.MODEL_STRUCTURE):
+    
+    x_aug = x0_augmented.copy() # create copy to avoid changing values
+    r = A_combined.shape[0]
+    delay = ((x0_augmented.shape[0]) // r) - 1
+
+    def augmented_prev_state(x_current, x_prevs):
+
+        # augment the current state with the previous ones
+        x_aug = np.hstack((x_current, x_prevs)).T
+
+        # add quadratic terms if necessary
+        if model_structure == "AHc":
+            x_aug_quad = opinf.operators.QuadraticOperator.ckron(x_aug)
+            x_model = np.hstack((x_aug, x_aug_quad)).T
+        else:
+            x_model = x_aug.copy()
+
+        return x_model
+
+    # initialize the state history
+    Xr_sim = np.zeros((r,num_steps-1))
+
+    # initialize the current and prevs vectors
+    x_current = x_aug[:r].copy()
+    x_prevs = x_aug[r:].copy()
+
+    # start the simulation loop
+    for t in range(0, num_steps-1):
+
+        # Solve the system
+        x_prev_aug = augmented_prev_state(x_current, x_prevs)
+        x_next = A_combined @ x_prev_aug
+
+        # store the results
+        Xr_sim[:, t] = x_next.copy()
+
+        # update the current and prevs vectors
+        # prevs
+        for td in range(delay-1):
+            start_idx = -(td+1)*r
+            if td == 0:
+                end_indx = None
+            else:
+                end_indx = -(td)*r
+            x_prevs[start_idx:end_indx] = x_prevs[-(td+2)*r:-(td+1)*r].copy()
+        if delay != 0:
+            x_prevs[:r] = x_current.copy()
+        # current
+        x_current = x_next.copy()
+
+    # lift and scale back to the solution space
+    X_sim_scaled = basis @ Xr_sim
+    X_sim = scaler.inverse_transform(X_sim_scaled.T).T
+
+    return X_sim
 

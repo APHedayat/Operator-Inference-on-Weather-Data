@@ -21,7 +21,8 @@ from data_processing import (dataset_to_array,
 from model import (run_model,
                    run_TD_model,
                    run_TD_model_scipy,
-                   run_TD_model_new)
+                   run_TD_model_new,
+                   run_discrete_TD_model_new)
 import pandas as pd
 
 def L(lat_idx, lat_vector):
@@ -132,6 +133,60 @@ def generate_evaluation_trajectories(model, data, basis, scaler, logger, x_sub):
         # if X_ROM.shape[1] != t_eval.size:
         #    raise ValueError(f"Very unstable model. Consider decreasing the prediction steps or adding regularization.")
         # logger.info(f"\t\tX_ROM shape: {X_ROM.shape}")
+        prediction_dataset = array_to_dataset_evaluation(X_ROM, config.DATA_VARS, t_eval_xarray, latitude, longitude, data)
+        all_predictions.append(prediction_dataset)
+
+    # Combine all the predictions into a single xarray dataset
+    combined_ds = xr.concat(all_predictions, dim=pd.Index(time_init, name='time'))
+
+    # store data
+    combined_ds.to_zarr(f'{config.LARGE_OUT_PATH}/pred.nc')
+
+
+def generate_discrete_evaluation_trajectories(model, data, basis, scaler, logger, x_sub):
+    
+    latitude = data.latitude.values
+    longitude = data.longitude.values
+   
+    time_index = data.get_index('time')
+    init_idx = time_index.get_loc(config.EVAL_START_DATE)
+
+    data_eval = data.isel(time=[i for i in range(init_idx, init_idx+(config.N_SKIP*(config.N_INIT)), config.N_SKIP)])
+    X_init, time_init = dataset_to_array(data_eval,
+                                        config.DATA_VARS,
+                                        None,
+                                        None)
+    X_init_subtracted = X_init - x_sub.reshape(-1,1) # subtract the last state
+    X_init_scaled = scaler.transform(X_init_subtracted.T).T
+    Xr_init_scaled = basis.T @ X_init_scaled
+
+    for idx in range(init_idx-1, init_idx-config.TIME_DELAY-1, -1):
+        data_eval_td = data.isel(time=[i for i in range(idx, idx+(config.N_SKIP*(config.N_INIT)), config.N_SKIP)])
+        X_init_td, time_init_td = dataset_to_array(data_eval_td,
+                                            config.DATA_VARS,
+                                            None,
+                                            None)
+        X_init_td = X_init_td - x_sub.reshape(-1,1) # subtract the last state
+        X_init_scaled_td = scaler.transform(X_init_td.T).T
+        Xr_init_scaled_td = basis.T @ X_init_scaled_td
+        Xr_init_scaled = np.vstack((Xr_init_scaled, Xr_init_scaled_td))
+
+    start = 0
+    stop = config.DT_ACTUAL*3600*(1e9)*config.N_PRED # in nanosecend for wb2
+    step = config.DT_ACTUAL*3600*(1e9) # in nanosecend for wb2
+    t_eval_xarray = np.arange(start, stop, step, dtype=np.int64)
+    t_eval_xarray = t_eval_xarray.astype('timedelta64[ns]') # to store in xarray
+
+    all_predictions = []
+
+    for i in range(config.N_INIT):
+        logger.info(f"\t\tgenerating trajectory {i}/{config.N_INIT-1}...")
+        x0 = Xr_init_scaled[:, i]  # Initial condition
+        X_ROM = run_discrete_TD_model_new(A_combined=model, x0_augmented=x0, num_steps=config.N_PRED, basis=basis, scaler=scaler)
+        X_ROM = X_ROM + x_sub.reshape(-1,1) # add the subtracted state back to the predictions
+        # attach the initial condition at the beginning of the dataset
+        x0_true = X_init[:,i].reshape(-1, 1)
+        X_ROM = np.hstack((x0_true, X_ROM))
         prediction_dataset = array_to_dataset_evaluation(X_ROM, config.DATA_VARS, t_eval_xarray, latitude, longitude, data)
         all_predictions.append(prediction_dataset)
 
