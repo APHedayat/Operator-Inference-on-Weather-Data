@@ -31,51 +31,85 @@ comp_paths = [
 
 # opinf model paths
 opinf_cases = [
-    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=full_Constant",
-    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=full_Ac_TD=0_Reg=0",
-    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=full_Ac_TD=0_Reg=100",
-    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=full_Ac_TD=2_Reg=0",
-    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=full_Ac_TD=2_Reg=1000",
-    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=full_Ac_TD=2_Reg=10000",
-    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=full_Ac_TD=5_Reg=0",
-    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=full_Ac_TD=5_Reg=1000",
-    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=full_Ac_TD=5_Reg=10000",
-    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=full_Ac_TD=10_Reg=0",
-    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=full_Ac_TD=10_Reg=1000",
-    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=full_Ac_TD=10_Reg=10000"
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=1000_Constant",
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=1000_Ac_TD=0_Reg=0",
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=1000_Ac_TD=0_Reg=10",
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=1000_Ac_TD=0_Reg=100",
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=1000_Ac_TD=0_Reg=1000",
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=1000_Ac_TD=0_Reg=10000",
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=1000_Ac_TD=2_Reg=0",
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=1000_Ac_TD=2_Reg=10",
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=1000_Ac_TD=2_Reg=100",
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=1000_Ac_TD=2_Reg=1000",
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=1000_Ac_TD=2_Reg=10000",
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=1000_Ac_TD=5_Reg=0",
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=1000_Ac_TD=5_Reg=10",
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=1000_Ac_TD=5_Reg=100",
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=1000_Ac_TD=5_Reg=1000",
+    "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=1000_Ac_TD=5_Reg=10000"
 ]
 
 case_labels = [
     "IFS-HRES",
     "constant",
     "linear_vars=4_modes=full_TD=0_Reg=0",
+    "linear_vars=4_modes=full_TD=0_Reg=10",
     "linear_vars=4_modes=full_TD=0_Reg=100",
+    "linear_vars=4_modes=full_TD=0_Reg=1000",
+    "linear_vars=4_modes=full_TD=0_Reg=10000",
     "linear_vars=4_modes=full_TD=2_Reg=0",
+    "linear_vars=4_modes=full_TD=2_Reg=10",
+    "linear_vars=4_modes=full_TD=2_Reg=100",
     "linear_vars=4_modes=full_TD=2_Reg=1000",
     "linear_vars=4_modes=full_TD=2_Reg=10000",
     "linear_vars=4_modes=full_TD=5_Reg=0",
+    "linear_vars=4_modes=full_TD=5_Reg=10",
+    "linear_vars=4_modes=full_TD=5_Reg=100",
     "linear_vars=4_modes=full_TD=5_Reg=1000",
     "linear_vars=4_modes=full_TD=5_Reg=10000",
-    "linear_vars=4_modes=full_TD=10_Reg=0",
-    "linear_vars=4_modes=full_TD=10_Reg=1000",
-    "linear_vars=4_modes=full_TD=10_Reg=10000"
 ]
 
 # ground truth path
 obs_path = c.DATA_PATH
-obs_path_pred = obs_path
-obs_name_pred = "true"
-# obs_path_pred = "/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_BASE-DATA/synthetic_true.nc"
-# obs_name_pred = "pod"
+# obs_path_pred = obs_path
+# obs_name_pred = "true"
+obs_path_pred = "/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=1000_BASE-DATA/synthetic_true.nc"
+obs_name_pred = "pod"
 
 # where to store results
-eval_name = "POD-10YEAR_vars=4_modes=full"
+eval_name = "POD-10YEAR_vars=4_modes=1000"
 output_path = f"./evaluation_results/{eval_name}"
 if not os.path.isdir(output_path):
     os.mkdir(output_path)
 
-# define markers
-markers = ['o', 's', 'D', '^', 'v', '<', '>', 'p', '*', 'h', 'H', '+', 'x', 'd', '|', '_']
+# define expanded markers
+markers = [
+    'o',  # circle
+    's',  # square
+    'D',  # diamond
+    '^',  # triangle_up
+    'v',  # triangle_down
+    '<',  # triangle_left
+    '>',  # triangle_right
+    'p',  # pentagon
+    '*',  # star
+    'h',  # hexagon1
+    'H',  # hexagon2
+    '+',  # plus
+    'x',  # x
+    'd',  # thin_diamond
+    '|',  # vertical line
+    '_',  # horizontal line
+    '.',  # point
+    ',',  # pixel
+    '1',  # tri_down
+    '2',  # tri_up
+    '3',  # tri_left
+    '4',  # tri_right
+    '8',  # octagon
+    'P',  # plus (filled)
+    'X',  # x (filled)
+]
 
 
 # threshold for unstable results

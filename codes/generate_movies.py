@@ -25,14 +25,14 @@ logger = logging.getLogger()
 
 
 opinf_cases = [
-    "FULL-DATASET-TRAIN_SINGLE_TRAJ_AHc_vars=4_modes=50_TD=3_Reg=100000"
+    "POD-10YEAR_vars=4_modes=1000_Ac_TD=5_Reg=1000"
 ]
 
 variables = ['2m_temperature', '10m_u_component_of_wind']
 
 # ground truth
 data_true = xr.open_zarr(config.DATA_PATH)
-data_true_pod = xr.open_zarr(f"/scratch/engin_root/engin1/ahedayat/results/FULL-DATASET-TRAIN_BASE-DATA_50-MODES/synthetic_true.nc")
+data_true_pod = xr.open_zarr(f"/scratch/engin_root/engin1/ahedayat/results/POD-10YEAR_vars=4_modes=1000_BASE-DATA/synthetic_true.nc")
 
 # define prediction snapshots
 pred_snaps = [0, 15, 30]

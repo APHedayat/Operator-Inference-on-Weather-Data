@@ -66,7 +66,7 @@ def plot_xarray_comparison(data, data_true, at_time, label, cmap='jet', save_as=
     ax2.set_title(f"true {label} at {data_true.time.values[at_time]}")  # set title
 
     # Add a single colorbar
-    cbar = fig.colorbar(img1, ax=[ax1, ax2], orientation='horizontal', pad=0.1, aspect=50, shrink=0.8)
+    cbar = fig.colorbar(img2, ax=[ax1, ax2], orientation='horizontal', pad=0.1, aspect=50, shrink=0.8)
     cbar.set_label(label)
 
     # plt.tight_layout()
@@ -135,7 +135,7 @@ def plot_xarray_movie_comparison(data, data_true, start_t, end_t, label, cmap='j
     title2 = ax2.set_title(f"true {label} of {data_true.time.values[0]}")  # set initial title
 
     # Add a single colorbar
-    cbar = fig.colorbar(img1, ax=[ax1, ax2], orientation='horizontal', pad=0.1, aspect=50, shrink=0.8)
+    cbar = fig.colorbar(img2, ax=[ax1, ax2], orientation='horizontal', pad=0.1, aspect=50, shrink=0.8)
     cbar.set_label(label)
 
     # Update function for animation
