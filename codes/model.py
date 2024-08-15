@@ -434,7 +434,7 @@ def run_discrete_TD_model_new(A_combined, x0_augmented, num_steps, basis, scaler
 
         # Solve the system
         x_prev_aug = augmented_prev_state(x_current, x_prevs)
-        x_next = A_combined @ x_prev_aug
+        x_next = A_combined[:,:-1] @ x_prev_aug + A_combined[:,-1]
 
         # store the results
         Xr_sim[:, t] = x_next.copy()
